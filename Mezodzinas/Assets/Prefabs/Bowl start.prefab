@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &7044140632745762525
+--- !u!1 &2802717301832637773
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,40 +8,40 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 10873734896588444}
-  - component: {fileID: 6831605827383120511}
-  - component: {fileID: 5708196812061587917}
-  - component: {fileID: -7266997189357671138}
-  - component: {fileID: 7152717456202579953}
+  - component: {fileID: 4130777873562032328}
+  - component: {fileID: 2006551268463930556}
+  - component: {fileID: 9102813229408437373}
+  - component: {fileID: -4901377531887768707}
+  - component: {fileID: 6846122888758576058}
   m_Layer: 0
-  m_Name: SVIESTS
-  m_TagString: Ingredient
+  m_Name: Bowl start
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &10873734896588444
+--- !u!4 &4130777873562032328
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7044140632745762525}
+  m_GameObject: {fileID: 2802717301832637773}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.6462703, y: -10.939316, z: 16.663565}
-  m_LocalScale: {x: 0.16293517, y: 0.16293517, z: 0.16293517}
+  m_LocalPosition: {x: 3.825659, y: -10.118649, z: 16.906265}
+  m_LocalScale: {x: 0.27522, y: 0.27524754, z: 0.27522}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &6831605827383120511
+--- !u!212 &2006551268463930556
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7044140632745762525}
+  m_GameObject: {fileID: 2802717301832637773}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -76,7 +76,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 6c35be35b16db7a4ba62bf2a542c745d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6360b292d9330494e8d01392014289af, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -87,13 +87,13 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!61 &5708196812061587917
+--- !u!61 &9102813229408437373
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7044140632745762525}
+  m_GameObject: {fileID: 2802717301832637773}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -116,10 +116,10 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.17700863, y: -0.5685215}
+  m_Offset: {x: -0.12415218, y: -1.9562528}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -130,16 +130,16 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 13.8841915, y: 6.7115784}
+  m_Size: {x: 15.713903, y: 4.213918}
   m_EdgeRadius: 0
---- !u!50 &-7266997189357671138
+--- !u!50 &-4901377531887768707
 Rigidbody2D:
   serializedVersion: 4
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7044140632745762525}
+  m_GameObject: {fileID: 2802717301832637773}
   m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
@@ -159,16 +159,23 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &7152717456202579953
+--- !u!114 &6846122888758576058
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7044140632745762525}
+  m_GameObject: {fileID: 2802717301832637773}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ffdaaeb6e39efca4980063e59a98f82e, type: 3}
+  m_Script: {fileID: 11500000, guid: ddf4e6826bc599f45979e27a4e332ad1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ingredientName: Butter
+  bowlStages:
+  - {fileID: 2802717301832637773}
+  - {fileID: 4436168412512580326, guid: 0e497b1e665dde243ba4e263020ef4b2, type: 3}
+  - {fileID: 3574174437279515673, guid: b94cd958ce467874eb104ce3df0cfb32, type: 3}
+  - {fileID: 7929144454246426575, guid: 6a68dac115e8e474c84f0f4304ba3391, type: 3}
+  - {fileID: 4562524818815374160, guid: 862e319bab88c3242a5f340ab3c1e808, type: 3}
+  - {fileID: 3867348060639990033, guid: 2852f2682e7af0641a83528b32c31420, type: 3}
+  - {fileID: 2451519873263198385, guid: c60773daa040b7d4ea4dcd5f0bb24482, type: 3}
