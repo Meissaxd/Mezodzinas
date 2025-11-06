@@ -1019,7 +1019,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.45891786, y: -0.2430712}
+  m_Offset: {x: 0.44761848, y: -0.2430712}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1030,7 +1030,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 4.1167974, y: 1.4861424}
+  m_Size: {x: 3.6669583, y: 1.4861424}
   m_EdgeRadius: 0
 --- !u!1 &1833028700
 GameObject:
@@ -1136,6 +1136,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2090185656}
+  - component: {fileID: 2090185657}
   m_Layer: 0
   m_Name: Interactables
   m_TagString: Untagged
@@ -1164,6 +1165,26 @@ Transform:
   - {fileID: 90403624}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2090185657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090185655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1963583c542d70b42bc9aadc762e1f51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  outlineColor: {r: 1, g: 1, b: 1, a: 0.9}
+  outlineThickness: 3
+  outlineSamples: 8
+  outlineChildren: 1
+  sourceCamera: {fileID: 174162272}
 --- !u!1001 &2131485050
 PrefabInstance:
   m_ObjectHideFlags: 0

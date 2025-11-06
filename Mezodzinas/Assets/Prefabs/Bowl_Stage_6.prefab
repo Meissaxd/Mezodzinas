@@ -171,7 +171,7 @@ MonoBehaviour:
   placedInOvenSound: {fileID: 8300000, guid: 2282bcfb5c8215f49a3f1d195d683df4, type: 3}
   bakingDoneSound: {fileID: 8300000, guid: 6bf8db05f94acc54f82ae9549d397918, type: 3}
   bakedPiePrefab: {fileID: 6902808742126553757, guid: 7d0cbfa9aeef0d24fa237b49a983c18e, type: 3}
-  tablePosition: {x: -0.9, y: -3.61, z: -1.05}
+  tablePosition: {x: -0.62, y: -3.01, z: 0}
 --- !u!50 &-8375867079668665862
 Rigidbody2D:
   serializedVersion: 4

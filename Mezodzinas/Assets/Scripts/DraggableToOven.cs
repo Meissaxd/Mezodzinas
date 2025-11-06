@@ -9,12 +9,12 @@ public class DraggableToOven : MonoBehaviour
 
     [Header("References")]
     public string ovenTag = "Oven";
-    public AudioClip placedInOvenSound;
-    public AudioClip bakingDoneSound;
-    public GameObject bakedPiePrefab;
+    public AudioClip placedInOvenSound;   // sound when putting pie in oven
+    public AudioClip bakingDoneSound;     // ding when ready
+    public GameObject bakedPiePrefab;     // baked pie prefab
 
     [Header("Positions")]
-    public Vector3 tablePosition = new Vector3(-0.9f, -3.61f, -1.05f);
+    public Vector3 tablePosition = new Vector3(-0.9f, -3.61f, -9f); // baked pie location
 
     private AudioSource audioSource;
     private bool isBaking = false;
@@ -46,6 +46,7 @@ public class DraggableToOven : MonoBehaviour
     {
         isDragging = false;
 
+        // detect oven via 2D collider
         Collider2D hit = Physics2D.OverlapPoint(transform.position);
         if (hit != null && hit.CompareTag(ovenTag))
         {
@@ -58,43 +59,36 @@ public class DraggableToOven : MonoBehaviour
     {
         isBaking = true;
 
-        // instantly move into oven & hide raw pie
+        // Move into oven and play "placed" sound
         transform.position = ovenObject.transform.position;
         if (placedInOvenSound)
             audioSource.PlayOneShot(placedInOvenSound);
 
-        // hide raw pie immediately
+        // Hide raw pie
         GetComponent<SpriteRenderer>().enabled = false;
 
-        // wait baking time
+        // Wait baking time
         yield return new WaitForSeconds(3f);
 
-        // --- Play "ding" sound reliably after baking ---
-        if (bakingDoneSound != null)
-        {
+        // Play ding
+        if (bakingDoneSound)
             AudioSource.PlayClipAtPoint(bakingDoneSound, ovenObject.transform.position);
-            Debug.Log("[Oven] Ding! Baking finished.");
+
+        // Spawn baked pie automatically
+        if (bakedPiePrefab != null)
+        {
+            Vector3 spawnPos = new Vector3(tablePosition.x, tablePosition.y, 0f);
+            GameObject bakedPie = Instantiate(bakedPiePrefab, spawnPos, Quaternion.identity);
+            bakedPie.SetActive(true);
+
+            Debug.Log($"[Oven] Baked pie spawned automatically at {spawnPos}");
         }
         else
         {
-            Debug.LogWarning("[Oven] No bakingDoneSound assigned!");
+            Debug.LogError("[Oven] Baked pie prefab not assigned!");
         }
 
-        // set up oven to spawn baked pie on click
-        if (bakedPiePrefab == null)
-        {
-            Debug.LogError("BakedPiePrefab not assigned! Assign a prefab from Project view.");
-        }
-        else
-        {
-            OvenClickHandler clicker = ovenObject.GetComponent<OvenClickHandler>();
-            if (clicker == null)
-                clicker = ovenObject.AddComponent<OvenClickHandler>();
-
-            clicker.Setup(bakedPiePrefab, tablePosition);
-        }
-
-        // destroy raw pie completely
+        // Remove raw pie
         Destroy(gameObject);
     }
 }
