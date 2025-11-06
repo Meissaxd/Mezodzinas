@@ -1174,17 +1174,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 2090185655}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1963583c542d70b42bc9aadc762e1f51, type: 3}
+  m_Script: {fileID: 11500000, guid: 0dbe80a0aee54234fb975c81e88499dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   hoverMask:
-    serializedVersion: 2
     m_Bits: 4294967295
-  outlineColor: {r: 1, g: 1, b: 1, a: 0.9}
+  outlineColor:
+    r: 0
+    g: 0
+    b: 0.9
+    a: 1
   outlineThickness: 3
   outlineSamples: 8
   outlineChildren: 1
   sourceCamera: {fileID: 174162272}
+  debug: 0
+  currentRoot: {fileID: 0}
 --- !u!1001 &2131485050
 PrefabInstance:
   m_ObjectHideFlags: 0
