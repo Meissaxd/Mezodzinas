@@ -8,6 +8,7 @@ TagManager:
   - Oven
   - Basket
   - BasketHole
+  - Projectile
   layers:
   - Default
   - TransparentFX
