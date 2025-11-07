@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -96,7 +96,7 @@ public class CategorySceneManager : MonoBehaviour
             string cat = (categoryKeys[i] ?? "").Trim().ToLowerInvariant();
             if (string.IsNullOrEmpty(cat))
             {
-                // Empty category name � treat as not met (or you could skip)
+                // Empty category name — treat as not met (or you could skip)
                 if (debugLog) Debug.LogWarning($"CategorySceneManager: categoryKeys[{i}] is empty. Scene will not trigger until category names are set.");
                 return false;
             }
