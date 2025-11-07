@@ -1,14 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 /// Attach this to the Basket GameObject. When a GameObject with tag "Projectile"
-/// collides with the basket it will play an optional sound and then be removed
-/// from the scene after a short delay. Additionally, this script tracks which
-/// prefab (by name) collided and keeps counts per prefab. You can assign up to
-/// five prefabs in the inspector (trackedPrefabs array) and the script will
-/// track how many of each of those prefabs have hit the basket. All counts are
-/// written to the debug log on each hit.
+/// collides with the basket it will:
+/// - play an optional sound,
+/// - be removed from the scene after a short delay,
+/// - and update on-screen counts (TextMeshPro) for five categories based on whether
+///   the prefab's name contains one of these words (case-insensitive):
+///   dzervene, avene, zemene, mellene, lacene
+///
+/// Matching is case-insensitive and uses the root object's name (strips "(Clone)").
 public class BasketCollisionDestroyer : MonoBehaviour
 {
     [Tooltip("Tag to check for and destroy on contact.")]
@@ -29,61 +32,79 @@ public class BasketCollisionDestroyer : MonoBehaviour
     [Tooltip("If true, logs each destroy for debugging.")]
     public bool debugLog = true;
 
-    [Header("Tracked Prefabs (assign exactly 5 if you like)")]
-    [Tooltip("Assign up to 5 prefab assets here to track how many of each collided with the basket. Leave unused slots null.")]
-    public GameObject[] trackedPrefabs = new GameObject[5];
+    [Header("Categories (fixed)")]
+    [Tooltip("Category names (fixed order). Matching is done by checking whether the prefab name contains one of these words (case-insensitive).")]
+    public string[] categoryKeys = new string[5] { "dzervene", "avene", "zemene", "mellene", "lacene" };
 
-    // Internal counts keyed by prefab-name (stripped of '(Clone)' if present) or other runtime names.
-    private readonly Dictionary<string, int> collisionCounts = new Dictionary<string, int>();
+    [Header("UI - TextMeshPro fields (one per category in same order as categoryKeys)")]
+    [Tooltip("Assign a TMP_Text for each category to display its saved count (same order as categoryKeys).")]
+    public TMP_Text[] categoryTexts = new TMP_Text[5];
 
-    // Map from tracked prefab stripped name -> original index in trackedPrefabs (for quick lookup)
-    private readonly Dictionary<string, int> trackedNameToIndex = new Dictionary<string, int>();
+    // Internal counts per category (index matches categoryKeys)
+    private int[] categoryCounts = new int[5];
+
+    // Lowercased category keys for fast case-insensitive matching
+    private string[] categoryKeysLower = new string[5];
+
+    // PlayerPrefs key prefix
+    private const string PlayerPrefsPrefix = "BasketCount_";
 
     void OnValidate()
     {
-        // Ensure the array has exactly length 5 so inspector shows 5 slots consistently.
-        if (trackedPrefabs == null || trackedPrefabs.Length != 5)
+        // Ensure arrays are length 5 to keep inspector consistent
+        if (categoryKeys == null || categoryKeys.Length != 5)
+            categoryKeys = new string[5] { "dzervene", "avene", "zemene", "mellene", "lacene" };
+
+        if (categoryTexts == null || categoryTexts.Length != 5)
+            categoryTexts = new TMP_Text[5];
+
+        if (categoryCounts == null || categoryCounts.Length != 5)
+            categoryCounts = new int[5];
+
+        if (categoryKeysLower == null || categoryKeysLower.Length != 5)
+            categoryKeysLower = new string[5];
+
+        // normalize lowercase cache for editor feedback
+        for (int i = 0; i < 5; i++)
         {
-            var newArr = new GameObject[5];
-            if (trackedPrefabs != null)
-            {
-                for (int i = 0; i < Mathf.Min(5, trackedPrefabs.Length); i++)
-                    newArr[i] = trackedPrefabs[i];
-            }
-            trackedPrefabs = newArr;
+            categoryKeys[i] = categoryKeys[i] ?? "";
+            categoryKeysLower[i] = categoryKeys[i].Trim().ToLowerInvariant();
         }
     }
 
     void Awake()
     {
-        BuildTrackedNameMap();
-        InitializeCounts();
+        // Prepare lowercase keys
+        for (int i = 0; i < categoryKeys.Length; i++)
+            categoryKeysLower[i] = (categoryKeys[i] ?? "").Trim().ToLowerInvariant();
+
+        // ensure arrays initialized
+        if (categoryCounts == null || categoryCounts.Length != 5)
+            categoryCounts = new int[5];
+
+        LoadCountsFromPrefs();
+        UpdateAllCategoryUI();
     }
 
-    // Build lookup map from assigned prefab names to their index
-    private void BuildTrackedNameMap()
+    // Load persisted counts for the five categories
+    private void LoadCountsFromPrefs()
     {
-        trackedNameToIndex.Clear();
-        for (int i = 0; i < trackedPrefabs.Length; i++)
+        for (int i = 0; i < categoryKeys.Length; i++)
         {
-            var prefab = trackedPrefabs[i];
-            if (prefab == null) continue;
-            string nameKey = StripCloneSuffix(prefab.name);
-            if (!trackedNameToIndex.ContainsKey(nameKey))
-                trackedNameToIndex.Add(nameKey, i);
+            string key = PlayerPrefsPrefix + categoryKeys[i].ToLowerInvariant();
+            categoryCounts[i] = PlayerPrefs.GetInt(key, 0);
+            if (debugLog) Debug.Log($"BasketCollisionDestroyer: Loaded {categoryKeys[i]} = {categoryCounts[i]} (PlayerPrefs key: {key})");
         }
     }
 
-    // Initialize collision counts for tracked prefabs (and clear any previous)
-    private void InitializeCounts()
+    // Save one category count to PlayerPrefs
+    private void SaveCountToPrefs(int index)
     {
-        collisionCounts.Clear();
-        // seed counts for tracked prefabs with 0
-        foreach (var kv in trackedNameToIndex)
-        {
-            if (!collisionCounts.ContainsKey(kv.Key))
-                collisionCounts.Add(kv.Key, 0);
-        }
+        if (index < 0 || index >= categoryKeys.Length) return;
+        string key = PlayerPrefsPrefix + categoryKeys[index].ToLowerInvariant();
+        PlayerPrefs.SetInt(key, categoryCounts[index]);
+        PlayerPrefs.Save();
+        if (debugLog) Debug.Log($"BasketCollisionDestroyer: Saved {categoryKeys[index]} = {categoryCounts[index]} (PlayerPrefs key: {key})");
     }
 
     // Called when using trigger colliders (Collider2D.isTrigger = true)
@@ -109,33 +130,40 @@ public class BasketCollisionDestroyer : MonoBehaviour
         // Determine the root object in case collider is on a child
         GameObject rootObj = other.transform.root.gameObject;
 
-        // Determine a prefab name to track. Try to match against assigned trackedPrefabs by name.
+        // Determine a prefab name to match. Strip "(Clone)" and lower-case for matching.
         string rawName = rootObj.name;
-        string prefabName = StripCloneSuffix(rawName);
+        string prefabName = StripCloneSuffix(rawName).Trim();
+        string prefabNameLower = prefabName.ToLowerInvariant();
 
-        // If tracked, increment its counter. If not, add a generic entry for this name.
-        if (trackedNameToIndex.TryGetValue(prefabName, out int index))
+        // Look for any category key that is contained in prefabNameLower (case-insensitive)
+        int matchedIndex = -1;
+        for (int i = 0; i < categoryKeysLower.Length; i++)
         {
-            // Ensure key exists in dictionary
-            if (!collisionCounts.ContainsKey(prefabName))
-                collisionCounts[prefabName] = 0;
+            var key = categoryKeysLower[i];
+            if (string.IsNullOrEmpty(key)) continue;
+            if (prefabNameLower.Contains(key))
+            {
+                matchedIndex = i;
+                break; // first match in order wins
+            }
+        }
 
-            collisionCounts[prefabName] += 1;
+        if (matchedIndex >= 0)
+        {
+            categoryCounts[matchedIndex]++;
+            SaveCountToPrefs(matchedIndex);
+            UpdateCategoryUI(matchedIndex);
+
+            if (debugLog)
+                Debug.Log($"BasketCollisionDestroyer: '{prefabName}' matched category '{categoryKeys[matchedIndex]}'. New count = {categoryCounts[matchedIndex]}");
         }
         else
         {
-            // Not in the assigned trackedPrefabs: still track it under its stripped name
-            if (!collisionCounts.ContainsKey(prefabName))
-                collisionCounts[prefabName] = 0;
-
-            collisionCounts[prefabName] += 1;
+            if (debugLog)
+                Debug.Log($"BasketCollisionDestroyer: Hit by untracked prefab '{prefabName}'. No category matched.");
         }
 
-        // Log current counts
-        if (debugLog)
-            Debug.Log($"BasketCollisionDestroyer: Hit by '{prefabName}'. Counts: {GetCountsLogString()}");
-
-        // Start coroutine to play sound and destroy after delay (preserves previous behavior)
+        // Start coroutine to play sound and destroy after delay
         StartCoroutine(PlaySoundAndDestroy(rootObj));
     }
 
@@ -156,11 +184,11 @@ public class BasketCollisionDestroyer : MonoBehaviour
             }
         }
 
-        // Optionally disable collider and visuals to prevent repeated collisions while waiting to be destroyed
-        var col = target.GetComponent<Collider2D>();
-        if (col != null) col.enabled = false;
-        var sr = target.GetComponent<SpriteRenderer>();
-        if (sr != null) sr.enabled = false;
+        // Disable all Collider2D components and SpriteRenderers immediately to avoid repeated collisions and visual overlap
+        var cols = target.GetComponentsInChildren<Collider2D>();
+        foreach (var c in cols) if (c != null) c.enabled = false;
+        var srs = target.GetComponentsInChildren<SpriteRenderer>();
+        foreach (var sr in srs) if (sr != null) sr.enabled = false;
 
         if (destroyDelay > 0f)
             yield return new WaitForSeconds(destroyDelay);
@@ -168,49 +196,48 @@ public class BasketCollisionDestroyer : MonoBehaviour
         if (target != null)
         {
             Destroy(target);
-            if (debugLog) Debug.Log($"BasketCollisionDestroyer: Destroyed '{target.name}'. Current counts: {GetCountsLogString()}");
+            if (debugLog) Debug.Log($"BasketCollisionDestroyer: Destroyed '{target.name}'.");
         }
     }
 
-    // Helper: make a single-line string listing counts for all known keys
-    private string GetCountsLogString()
+    // Update single category UI text
+    private void UpdateCategoryUI(int index)
     {
-        // Build "name:count, name2:count, ..." sorted by tracked prefabs first (if present)
-        var parts = new List<string>();
-
-        // Add tracked prefab entries in inspector order if present
-        for (int i = 0; i < trackedPrefabs.Length; i++)
+        if (categoryTexts == null || index < 0 || index >= categoryTexts.Length) return;
+        var text = categoryTexts[index];
+        if (text != null)
         {
-            var prefab = trackedPrefabs[i];
-            if (prefab == null) continue;
-            string key = StripCloneSuffix(prefab.name);
-            int count = collisionCounts.ContainsKey(key) ? collisionCounts[key] : 0;
-            parts.Add($"{key}:{count}");
+            text.text = $"{categoryKeys[index]}: {categoryCounts[index]}";
         }
+    }
 
-        // Add any other keys that are not in trackedPrefabs
-        foreach (var kv in collisionCounts)
+    // Update all UI fields
+    private void UpdateAllCategoryUI()
+    {
+        for (int i = 0; i < categoryKeys.Length; i++)
+            UpdateCategoryUI(i);
+    }
+
+    // Public helper to reset counts both in-memory and in PlayerPrefs and update UI
+    public void ResetCounts()
+    {
+        for (int i = 0; i < categoryCounts.Length; i++)
         {
-            if (trackedNameToIndex.ContainsKey(kv.Key)) continue;
-            parts.Add($"{kv.Key}:{kv.Value}");
+            categoryCounts[i] = 0;
+            string key = PlayerPrefsPrefix + categoryKeys[i].ToLowerInvariant();
+            PlayerPrefs.DeleteKey(key);
         }
-
-        return string.Join(", ", parts);
+        PlayerPrefs.Save();
+        UpdateAllCategoryUI();
+        if (debugLog) Debug.Log("BasketCollisionDestroyer: Counts reset and PlayerPrefs cleared for all categories.");
     }
 
     // Remove "(Clone)" suffix if present to better match prefab asset names
     private string StripCloneSuffix(string name)
     {
-        if (name == null) return "";
+        if (string.IsNullOrEmpty(name)) return "";
         if (name.EndsWith("(Clone)"))
             return name.Substring(0, name.Length - "(Clone)".Length).Trim();
         return name;
-    }
-
-    /// Public helper to reset counts (callable from other scripts or via UnityEvents)
-    public void ResetCounts()
-    {
-        InitializeCounts();
-        if (debugLog) Debug.Log("BasketCollisionDestroyer: Counts reset.");
     }
 }

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3969499680394812327}
   - component: {fileID: 1347595985769694062}
   m_Layer: 0
-  m_Name: "l\u0101cene"
+  m_Name: lacene
   m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
