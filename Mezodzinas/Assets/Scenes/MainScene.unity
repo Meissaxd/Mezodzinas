@@ -2114,9 +2114,9 @@ MonoBehaviour:
   - mellene
   - lacene
   nextSceneName: Virtuve
-  requiredPerCategory: 1
+  requiredPerCategory: 2
   checkInterval: 1
-  debugLog: 1
+  debugLog: 0
 --- !u!1 &1706279841
 GameObject:
   m_ObjectHideFlags: 0
