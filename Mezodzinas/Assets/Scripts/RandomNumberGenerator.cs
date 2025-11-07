@@ -9,7 +9,7 @@ public class RandomNumberGenerator : MonoBehaviour
     [SerializeField] private Sprite[] numberSprites = new Sprite[5];
 
     [Header("Per-number prefabs (index 0 -> number 1, index 4 -> number 5)")]
-    [Tooltip("Optional: if assigned for a number, the prefab will be instantiated instead of (or in addition to) showing the UI image.")]
+    [Tooltip("Optional: if assigned for a number, the prefab will be instantiated.")]
     [SerializeField] private GameObject[] numberPrefabs = new GameObject[5];
 
     [Header("Prefab spawning")]
@@ -19,6 +19,12 @@ public class RandomNumberGenerator : MonoBehaviour
     [SerializeField] private Transform spawnParent;
     [Tooltip("When true, prefer instantiating prefabs if a prefab exists for the generated number. When false, UI image is preferred.")]
     [SerializeField] private bool preferPrefabs = true;
+    [Tooltip("If true, prevent spawning a new prefab while a previous spawned instance still exists.")]
+    [SerializeField] private bool singleInstanceOnly = false;
+
+    [Header("UI")]
+    [Tooltip("Optional UI Button that will trigger generation/spawn when clicked.")]
+    [SerializeField] private Button spawnButton;
 
     [Header("Display (UI Image)")]
     [Tooltip("Target UI Image used when displaying sprites. If left empty a Canvas + Image will be created automatically.")]
@@ -32,14 +38,12 @@ public class RandomNumberGenerator : MonoBehaviour
     [SerializeField, Range(0f, 1f), Tooltip("Volume at which final sound is played (PlayOneShot).")] private float audioVolume = 1f;
 
     [Header("Display Timing")]
-    [SerializeField, Tooltip("Seconds the final generated image / spawned prefab remains visible before hiding/destroying. Set <= 0 to keep it visible indefinitely.")]
+    [SerializeField, Tooltip("Seconds the final generated image remains visible before hiding. Set <= 0 to keep it visible indefinitely.")]
     private float displayDuration = 2f;
 
-    [Header("Auto-destroy / Auto-hide toggles")]
+    [Header("Auto-hide toggles")]
     [Tooltip("When true the UI image will automatically hide after Display Duration (if > 0).")]
     [SerializeField] private bool autoHideDisplay = true;
-    [Tooltip("When true spawned prefab instances will be destroyed after Display Duration (if > 0).")]
-    [SerializeField] private bool autoDestroySpawnedPrefabs = true;
 
     [Header("Generation sequence")]
     [SerializeField, Tooltip("Enable the visual 'generating' animation (flashing). If disabled the final number is chosen immediately.")]
@@ -77,6 +81,9 @@ public class RandomNumberGenerator : MonoBehaviour
 
     // Hide coroutine handle (so we can cancel/reschedule hides)
     private Coroutine hideCoroutine;
+
+    // Keep a reference to the last spawned prefab instance (for single-instance enforcement)
+    private GameObject lastSpawnedInstance;
 
     // Remaining cooldown in seconds (read-only)
     public float CooldownRemaining => Mathf.Max(0f, nextAvailableTime - Time.time);
@@ -307,17 +314,28 @@ public class RandomNumberGenerator : MonoBehaviour
     {
         if (prefab == null) return;
 
+        // If single-instance mode is active, prevent spawning while an instance still exists
+        if (singleInstanceOnly && lastSpawnedInstance != null)
+        {
+            // Unity treats destroyed objects as null; this check blocks only when an instance truly exists.
+            Debug.Log($"RandomNumberGenerator: spawn blocked because singleInstanceOnly is enabled and an instance already exists ({lastSpawnedInstance.name}).");
+            return;
+        }
+
         Vector3 pos = spawnPoint != null ? spawnPoint.position : transform.position;
-        pos.z = -1f; // ensure 2D plane placed at z = -1
+        pos.z = -1f; // ensure placed at z = -1 (2D layer)
 
         // instantiate using parent-aware overload so transform is correct on creation
         var instance = Instantiate(prefab, pos, Quaternion.identity, spawnParent);
 
-        // force position after instantiation to ensure z is -1 even if parent or prefab set transforms alter it
+        // force position after instantiation to ensure z remains as requested even if parent/prefab modifies it
         instance.transform.position = pos;
 
         // give the instance a clear name so you can inspect spawned objects at runtime
         instance.name = $"Number_{number}_{prefab.name}";
+
+        // keep reference for single-instance enforcement
+        lastSpawnedInstance = instance;
 
         // Log the SpriteRenderer sprite (if any) for debugging mapping issues
         var sr = instance.GetComponentInChildren<SpriteRenderer>();
@@ -330,8 +348,9 @@ public class RandomNumberGenerator : MonoBehaviour
             Debug.Log("Spawned prefab instance has no SpriteRenderer in root/children.");
         }
 
-        if (autoDestroySpawnedPrefabs && displayDuration > 0f)
-            Destroy(instance, displayDuration);
+        // NOTE: we intentionally do not auto-destroy spawned prefabs here.
+        // If singleInstanceOnly is enabled, the presence of lastSpawnedInstance will block further spawns until
+        // that GameObject is destroyed elsewhere (or becomes null).
     }
 
     private IEnumerator HideAfterDelay(Image image, float seconds)
@@ -448,12 +467,28 @@ public class RandomNumberGenerator : MonoBehaviour
             if (childImage != null)
                 childImage.enabled = false;
         }
+
+        // Wire up the optional UI Button (use a void method wrapper so Button.onClick works)
+        if (spawnButton != null)
+            spawnButton.onClick.AddListener(OnSpawnButtonPressed);
     }
 
-    // Also allow manual triggering by pressing Mouse 1 (left click) — changed from KeyCode.Q
+    // Public void wrapper that UI Button can call (Button.onClick expects void)
+    public void OnSpawnButtonPressed()
+    {
+        Generate();
+    }
+
+    void OnDestroy()
+    {
+        if (spawnButton != null)
+            spawnButton.onClick.RemoveListener(OnSpawnButtonPressed);
+    }
+
+    // Also allow manual triggering by pressing Q (Play mode, Game view focused)
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetKeyDown(KeyCode.Q))
             Generate();
     }
 
