@@ -8,6 +8,18 @@ public class RandomNumberGenerator : MonoBehaviour
     [Header("Per-number sprites (index 0 -> number 1, index 4 -> number 5)")]
     [SerializeField] private Sprite[] numberSprites = new Sprite[5];
 
+    [Header("Per-number prefabs (index 0 -> number 1, index 4 -> number 5)")]
+    [Tooltip("Optional: if assigned for a number, the prefab will be instantiated instead of (or in addition to) showing the UI image.")]
+    [SerializeField] private GameObject[] numberPrefabs = new GameObject[5];
+
+    [Header("Prefab spawning")]
+    [Tooltip("Where to spawn prefabs. If null, this GameObject's position is used.")]
+    [SerializeField] private Transform spawnPoint;
+    [Tooltip("Optional parent for spawned prefabs.")]
+    [SerializeField] private Transform spawnParent;
+    [Tooltip("When true, prefer instantiating prefabs if a prefab exists for the generated number. When false, UI image is preferred.")]
+    [SerializeField] private bool preferPrefabs = true;
+
     [Header("Display (UI Image)")]
     [Tooltip("Target UI Image used when displaying sprites. If left empty a Canvas + Image will be created automatically.")]
     [SerializeField] private Image targetImage;
@@ -20,8 +32,14 @@ public class RandomNumberGenerator : MonoBehaviour
     [SerializeField, Range(0f, 1f), Tooltip("Volume at which final sound is played (PlayOneShot).")] private float audioVolume = 1f;
 
     [Header("Display Timing")]
-    [SerializeField, Tooltip("Seconds the final generated image remains visible before hiding. Set <= 0 to keep it visible indefinitely.")]
+    [SerializeField, Tooltip("Seconds the final generated image / spawned prefab remains visible before hiding/destroying. Set <= 0 to keep it visible indefinitely.")]
     private float displayDuration = 2f;
+
+    [Header("Auto-destroy / Auto-hide toggles")]
+    [Tooltip("When true the UI image will automatically hide after Display Duration (if > 0).")]
+    [SerializeField] private bool autoHideDisplay = true;
+    [Tooltip("When true spawned prefab instances will be destroyed after Display Duration (if > 0).")]
+    [SerializeField] private bool autoDestroySpawnedPrefabs = true;
 
     [Header("Generation sequence")]
     [SerializeField, Tooltip("Enable the visual 'generating' animation (flashing). If disabled the final number is chosen immediately.")]
@@ -65,6 +83,21 @@ public class RandomNumberGenerator : MonoBehaviour
     public bool IsOnCooldown => Time.time < nextAvailableTime;
     public bool IsGenerating => isGenerating;
 
+    // Editor-time validation to help catch misconfiguration
+    void OnValidate()
+    {
+        if (numberSprites == null || numberSprites.Length < 5)
+            numberSprites = new Sprite[5];
+
+        if (numberPrefabs == null || numberPrefabs.Length < 5)
+            numberPrefabs = new GameObject[5];
+
+#if UNITY_EDITOR
+        if (numberSprites.Length < 5 || numberPrefabs.Length < 5)
+            Debug.LogWarning($"RandomNumberGenerator: expected arrays of length >= 5. numberSprites.Length={numberSprites.Length}, numberPrefabs.Length={numberPrefabs.Length}");
+#endif
+    }
+
     // Initiates the generation sequence.
     // If on cooldown or a sequence is already running, prints "not so fast".
     public int Generate()
@@ -95,9 +128,9 @@ public class RandomNumberGenerator : MonoBehaviour
         isGenerating = true;
 
         var image = targetImage ?? EnsureRuntimeImage();
-        if (image == null)
+        if (image == null && !HasAnyPrefabAssigned())
         {
-            Debug.LogWarning("RandomNumberGenerator: no Image available to display generation.");
+            Debug.LogWarning("RandomNumberGenerator: no Image available to display generation and no prefabs assigned.");
             isGenerating = false;
             yield break;
         }
@@ -109,7 +142,8 @@ public class RandomNumberGenerator : MonoBehaviour
             hideCoroutine = null;
         }
 
-        image.enabled = true;
+        if (image != null)
+            image.enabled = true;
 
         // build list of valid sprite indices (only non-null)
         var validIndices = new List<int>();
@@ -131,26 +165,29 @@ public class RandomNumberGenerator : MonoBehaviour
             float currInterval = Mathf.Lerp(initialFlashInterval, finalFlashInterval, eased);
             currInterval = Mathf.Max(0.001f, currInterval);
 
-            // pick and show a random sprite for the flash
-            if (validIndices.Count > 0)
+            // pick and show a random sprite for the flash (UI only)
+            if (image != null)
             {
-                int pick = validIndices[Random.Range(0, validIndices.Count)];
-                var s = numberSprites[pick];
-                image.sprite = s;
-                if (s != null) image.SetNativeSize();
-            }
-            else if (numberSprites != null && numberSprites.Length > 0)
-            {
-                int pick = Random.Range(0, numberSprites.Length);
-                var s = numberSprites[pick];
-                image.sprite = s;
-                if (s != null) image.SetNativeSize();
+                if (validIndices.Count > 0)
+                {
+                    int pick = validIndices[Random.Range(0, validIndices.Count)];
+                    var s = numberSprites[pick];
+                    image.sprite = s;
+                    if (s != null) image.SetNativeSize();
+                }
+                else if (numberSprites != null && numberSprites.Length > 0)
+                {
+                    int pick = Random.Range(0, numberSprites.Length);
+                    var s = numberSprites[pick];
+                    image.sprite = s;
+                    if (s != null) image.SetNativeSize();
+                }
             }
 
             yield return new WaitForSeconds(currInterval);
         }
 
-        // After animation finishes pick final number and display its sprite
+        // After animation finishes pick final number and display its sprite / prefab
         FinalizeGenerationInternal(image);
 
         // start cooldown after the sequence completes
@@ -177,13 +214,37 @@ public class RandomNumberGenerator : MonoBehaviour
     {
         LastValue = Random.Range(1, 6); // 1..5 inclusive
         var finalSprite = GetSpriteForNumber(LastValue);
+        var prefab = GetPrefabForNumber(LastValue);
 
+        int index = LastValue - 1;
+        Debug.Log($"RandomNumberGenerator: Finalized LastValue={LastValue} (index {index}). prefab={(prefab != null ? prefab.name : "null")}, sprite={(finalSprite != null ? finalSprite.name : "null")}");
+
+        // If a prefab exists and prefabs are preferred, instantiate prefab
+        if (preferPrefabs && prefab != null)
+        {
+            SpawnPrefab(prefab, LastValue);
+            Debug.Log($"RandomNumberGenerator generated: {LastValue} -> Prefab \"{prefab.name}\" instantiated");
+            PlayFinalAudio();
+            return;
+        }
+
+        // Otherwise, fallback to UI image display (existing behavior)
         if (image == null)
         {
             if (finalSprite != null)
                 Debug.Log($"RandomNumberGenerator generated: {LastValue} -> Sprite \"{finalSprite.name}\" (no Image to display)");
+            else if (prefab != null)
+                Debug.Log($"RandomNumberGenerator generated: {LastValue} -> Prefab \"{prefab.name}\" available but no Image configured.");
             else
-                Debug.LogWarning($"RandomNumberGenerator generated: {LastValue} -> No sprite assigned for this number.");
+                Debug.LogWarning($"RandomNumberGenerator generated: {LastValue} -> No sprite or prefab assigned for this number.");
+
+            // If a prefab exists but preferPrefabs == false, we can still optionally spawn it:
+            if (!preferPrefabs && prefab != null)
+            {
+                SpawnPrefab(prefab, LastValue);
+                Debug.Log($"RandomNumberGenerator generated: {LastValue} -> Prefab \"{prefab.name}\" instantiated (preferPrefabs=false)");
+                PlayFinalAudio();
+            }
             return;
         }
 
@@ -195,22 +256,10 @@ public class RandomNumberGenerator : MonoBehaviour
             image.transform.SetAsLastSibling();
             Debug.Log($"RandomNumberGenerator generated: {LastValue} -> Sprite \"{finalSprite.name}\" (UI Image)");
 
-            // play single final audio clip (if any)
-            if (finalAudioClip != null)
-            {
-                var audio = targetAudioSource ?? EnsureRuntimeAudioSource();
-                if (audio != null)
-                {
-                    audio.PlayOneShot(finalAudioClip, Mathf.Clamp01(audioVolume));
-                }
-                else
-                {
-                    Debug.LogWarning("RandomNumberGenerator: audio clip assigned but no AudioSource available to play it.");
-                }
-            }
+            PlayFinalAudio();
 
             // schedule auto-hide if requested
-            if (displayDuration > 0f)
+            if (autoHideDisplay && displayDuration > 0f)
             {
                 // cancel previous hide if any
                 if (hideCoroutine != null)
@@ -223,8 +272,66 @@ public class RandomNumberGenerator : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"RandomNumberGenerator generated: {LastValue} -> No sprite assigned for this number. Assign one in the inspector.");
+            // No UI sprite; optionally spawn prefab if exists
+            if (prefab != null)
+            {
+                SpawnPrefab(prefab, LastValue);
+                Debug.Log($"RandomNumberGenerator generated: {LastValue} -> Prefab \"{prefab.name}\" instantiated (no UI sprite assigned).");
+                PlayFinalAudio();
+            }
+            else
+            {
+                Debug.LogWarning($"RandomNumberGenerator generated: {LastValue} -> No sprite or prefab assigned for this number. Assign one in the inspector.");
+            }
         }
+    }
+
+    private void PlayFinalAudio()
+    {
+        if (finalAudioClip != null)
+        {
+            var audio = targetAudioSource ?? EnsureRuntimeAudioSource();
+            if (audio != null)
+            {
+                audio.PlayOneShot(finalAudioClip, Mathf.Clamp01(audioVolume));
+            }
+            else
+            {
+                Debug.LogWarning("RandomNumberGenerator: audio clip assigned but no AudioSource available to play it.");
+            }
+        }
+    }
+
+    // now accepts number for clearer naming in hierarchy & debugging
+    private void SpawnPrefab(GameObject prefab, int number)
+    {
+        if (prefab == null) return;
+
+        Vector3 pos = spawnPoint != null ? spawnPoint.position : transform.position;
+        pos.z = -1f; // ensure 2D plane placed at z = -1
+
+        // instantiate using parent-aware overload so transform is correct on creation
+        var instance = Instantiate(prefab, pos, Quaternion.identity, spawnParent);
+
+        // force position after instantiation to ensure z is -1 even if parent or prefab set transforms alter it
+        instance.transform.position = pos;
+
+        // give the instance a clear name so you can inspect spawned objects at runtime
+        instance.name = $"Number_{number}_{prefab.name}";
+
+        // Log the SpriteRenderer sprite (if any) for debugging mapping issues
+        var sr = instance.GetComponentInChildren<SpriteRenderer>();
+        if (sr != null)
+        {
+            Debug.Log($"Spawned prefab instance has SpriteRenderer with sprite: {(sr.sprite != null ? sr.sprite.name : "null")}");
+        }
+        else
+        {
+            Debug.Log("Spawned prefab instance has no SpriteRenderer in root/children.");
+        }
+
+        if (autoDestroySpawnedPrefabs && displayDuration > 0f)
+            Destroy(instance, displayDuration);
     }
 
     private IEnumerator HideAfterDelay(Image image, float seconds)
@@ -311,6 +418,23 @@ public class RandomNumberGenerator : MonoBehaviour
         return numberSprites[index];
     }
 
+    // Returns the prefab assigned to a 1-based number, or null if not assigned / out of range
+    public GameObject GetPrefabForNumber(int number)
+    {
+        int index = number - 1;
+        if (index < 0 || numberPrefabs == null || index >= numberPrefabs.Length)
+            return null;
+        return numberPrefabs[index];
+    }
+
+    private bool HasAnyPrefabAssigned()
+    {
+        if (numberPrefabs == null) return false;
+        foreach (var p in numberPrefabs)
+            if (p != null) return true;
+        return false;
+    }
+
     // Ensure image is hidden at start
     void Start()
     {
@@ -326,10 +450,10 @@ public class RandomNumberGenerator : MonoBehaviour
         }
     }
 
-    // Also allow manual triggering by pressing Q (Play mode, Game view focused)
+    // Also allow manual triggering by pressing Mouse 1 (left click) — changed from KeyCode.Q
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetMouseButtonDown(0))
             Generate();
     }
 
