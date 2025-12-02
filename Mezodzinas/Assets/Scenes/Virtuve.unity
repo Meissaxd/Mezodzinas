@@ -583,7 +583,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ddf316ab08b38e4e9c705289c542bb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectToSpawn: {fileID: 8090194198329187665, guid: 92ba800a69aaabe49aaf93e7a4dddae2, type: 3}
+  objectToSpawn: {fileID: 6690206005131026296, guid: 38270b962097c1c4b81c3243d24157a0, type: 3}
   spawnPoint: {fileID: 1662813011}
 --- !u!61 &1061398418
 BoxCollider2D:
@@ -918,7 +918,7 @@ Transform:
   m_GameObject: {fileID: 1662813010}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 6.02, y: 3.43, z: -0.5834427}
+  m_LocalPosition: {x: 6.35, y: 3.43, z: -0.5834427}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1177,19 +1177,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dbe80a0aee54234fb975c81e88499dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverMask:
-    m_Bits: 4294967295
-  outlineColor:
-    r: 0
-    g: 0
-    b: 0.9
-    a: 1
-  outlineThickness: 3
-  outlineSamples: 8
-  outlineChildren: 1
-  sourceCamera: {fileID: 174162272}
-  debug: 0
-  currentRoot: {fileID: 0}
 --- !u!1001 &2131485050
 PrefabInstance:
   m_ObjectHideFlags: 0
