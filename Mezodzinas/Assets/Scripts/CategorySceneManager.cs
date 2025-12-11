@@ -7,10 +7,7 @@ using UnityEngine.SceneManagement;
 /// scenes to `nextSceneName` when every configured category has at least
 /// `requiredPerCategory` points.
 ///
-/// Usage:
-/// - Attach this to an active GameObject in your main scene (e.g. an empty "GameManager").
-/// - Verify the category names match the ones used in BasketCollisionDestroyer (defaults provided).
-/// - Make sure the target scene "Virtuve" is added to Build Settings (or set nextSceneName to a valid scene).
+/// This version adds an opt-in reset of those PlayerPrefs on start (useful for testing).
 public class CategorySceneManager : MonoBehaviour
 {
     [Header("Categories to check (must match BasketCollisionDestroyer.categoryKeys)")]
@@ -35,6 +32,15 @@ public class CategorySceneManager : MonoBehaviour
     [SerializeField]
     private bool debugLog = true;
 
+    [Header("Testing helpers")]
+    [Tooltip("If true, this script will delete the saved BasketCount_<category> keys on start.")]
+    [SerializeField]
+    private bool resetCountsOnStart = true;
+
+    [Tooltip("If true, the reset will run only when running in the Unity Editor (default). Disable to also reset in builds.")]
+    [SerializeField]
+    private bool resetOnlyInEditor = true;
+
     // PlayerPrefs key prefix used by BasketCollisionDestroyer
     private const string PlayerPrefsPrefix = "BasketCount_";
 
@@ -53,6 +59,23 @@ public class CategorySceneManager : MonoBehaviour
 
         if (requiredPerCategory < 1)
             requiredPerCategory = 1;
+    }
+
+    private void Awake()
+    {
+        // Optionally clear saved counts on start (useful for testing)
+        if (resetCountsOnStart)
+        {
+            if (!resetOnlyInEditor || Application.isEditor)
+            {
+                if (debugLog) Debug.Log("CategorySceneManager: resetCountsOnStart is true; clearing BasketCount_* keys.");
+                ResetCountsNow();
+            }
+            else
+            {
+                if (debugLog) Debug.Log("CategorySceneManager: resetCountsOnStart is true but resetOnlyInEditor is enabled and this is not the Editor — skipping reset.");
+            }
+        }
     }
 
     private void OnEnable()
@@ -79,8 +102,6 @@ public class CategorySceneManager : MonoBehaviour
             {
                 triggered = true;
                 if (debugLog) Debug.Log($"CategorySceneManager: All categories reached >= {requiredPerCategory}. Loading scene '{nextSceneName}'.");
-                // Optionally you can use LoadSceneAsync if you want an asynchronous load
-                // SceneManager.LoadSceneAsync(nextSceneName);
                 SceneManager.LoadScene(nextSceneName);
                 yield break;
             }
@@ -96,7 +117,6 @@ public class CategorySceneManager : MonoBehaviour
             string cat = (categoryKeys[i] ?? "").Trim().ToLowerInvariant();
             if (string.IsNullOrEmpty(cat))
             {
-                // Empty category name — treat as not met (or you could skip)
                 if (debugLog) Debug.LogWarning($"CategorySceneManager: categoryKeys[{i}] is empty. Scene will not trigger until category names are set.");
                 return false;
             }
@@ -124,5 +144,27 @@ public class CategorySceneManager : MonoBehaviour
             if (debugLog) Debug.Log($"CategorySceneManager: Force check confirmed counts. Loading scene '{nextSceneName}'.");
             SceneManager.LoadScene(nextSceneName);
         }
+    }
+
+    /// Public method to delete the BasketCount_<category> PlayerPrefs keys now.
+    /// Can be called from inspector buttons, debug UI, or tests.
+    public void ResetCountsNow()
+    {
+        if (categoryKeys == null) return;
+
+        for (int i = 0; i < categoryKeys.Length; i++)
+        {
+            string cat = (categoryKeys[i] ?? "").Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(cat)) continue;
+            string key = PlayerPrefsPrefix + cat;
+            if (PlayerPrefs.HasKey(key))
+            {
+                PlayerPrefs.DeleteKey(key);
+                if (debugLog) Debug.Log($"CategorySceneManager: Deleted PlayerPrefs key '{key}'.");
+            }
+        }
+        PlayerPrefs.Save();
+        // Also ensure we haven't already triggered
+        triggered = false;
     }
 }

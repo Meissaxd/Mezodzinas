@@ -1,13 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// Attach this to the Basket GameObject. When a GameObject with tag "Projectile"
 /// collides with the basket it will:
 /// - play an optional sound,
 /// - be removed from the scene after a short delay,
-/// - and update on-screen counts (TextMeshPro) for five categories based on whether
+/// - and update on-screen counts (UI Images + TextMeshPro) for five categories based on whether
 ///   the prefab's name contains one of these words (case-insensitive):
 ///   dzervene, avene, zemene, mellene, lacene
 ///
@@ -36,9 +37,9 @@ public class BasketCollisionDestroyer : MonoBehaviour
     [Tooltip("Category names (fixed order). Matching is done by checking whether the prefab name contains one of these words (case-insensitive).")]
     public string[] categoryKeys = new string[5] { "dzervene", "avene", "zemene", "mellene", "lacene" };
 
-    [Header("UI - TextMeshPro fields (one per category in same order as categoryKeys)")]
-    [Tooltip("Assign a TMP_Text for each category to display its saved count (same order as categoryKeys).")]
-    public TMP_Text[] categoryTexts = new TMP_Text[5];
+    [Header("UI per category (same order as categoryKeys)")]
+    [Tooltip("For each category assign the sprite (berry image), an Image component that will display the sprite, and a TMP_Text to show the numeric count.")]
+    public CategoryUI[] categoryUIs = new CategoryUI[5];
 
     // Internal counts per category (index matches categoryKeys)
     private int[] categoryCounts = new int[5];
@@ -49,14 +50,33 @@ public class BasketCollisionDestroyer : MonoBehaviour
     // PlayerPrefs key prefix
     private const string PlayerPrefsPrefix = "BasketCount_";
 
+    [System.Serializable]
+    public class CategoryUI
+    {
+        [Tooltip("optional: a display name. Matching uses categoryKeys (above). If left empty, the matching key from categoryKeys will be used.")]
+        public string displayName;
+
+        [Tooltip("Sprite for this category (the berry image).")]
+        public Sprite sprite;
+
+        [Tooltip("UI Image component that will display the sprite.")]
+        public Image image;
+
+        [Tooltip("TMP_Text used to display the numeric count for this category.")]
+        public TMP_Text countText;
+
+        [Tooltip("If true the image will be shown; if false the image component will be hidden.")]
+        public bool showImage = true;
+    }
+
     void OnValidate()
     {
         // Ensure arrays are length 5 to keep inspector consistent
         if (categoryKeys == null || categoryKeys.Length != 5)
             categoryKeys = new string[5] { "dzervene", "avene", "zemene", "mellene", "lacene" };
 
-        if (categoryTexts == null || categoryTexts.Length != 5)
-            categoryTexts = new TMP_Text[5];
+        if (categoryUIs == null || categoryUIs.Length != 5)
+            categoryUIs = new CategoryUI[5];
 
         if (categoryCounts == null || categoryCounts.Length != 5)
             categoryCounts = new int[5];
@@ -69,6 +89,13 @@ public class BasketCollisionDestroyer : MonoBehaviour
         {
             categoryKeys[i] = categoryKeys[i] ?? "";
             categoryKeysLower[i] = categoryKeys[i].Trim().ToLowerInvariant();
+
+            // if displayName empty, keep it synced for inspector clarity
+            if (categoryUIs[i] == null)
+                categoryUIs[i] = new CategoryUI();
+
+            if (string.IsNullOrEmpty(categoryUIs[i].displayName))
+                categoryUIs[i].displayName = categoryKeys[i];
         }
     }
 
@@ -81,6 +108,9 @@ public class BasketCollisionDestroyer : MonoBehaviour
         // ensure arrays initialized
         if (categoryCounts == null || categoryCounts.Length != 5)
             categoryCounts = new int[5];
+
+        if (categoryUIs == null || categoryUIs.Length != 5)
+            categoryUIs = new CategoryUI[5];
 
         LoadCountsFromPrefs();
         UpdateAllCategoryUI();
@@ -200,15 +230,45 @@ public class BasketCollisionDestroyer : MonoBehaviour
         }
     }
 
-    // Update single category UI text
+    // Update single category UI
     private void UpdateCategoryUI(int index)
     {
-        if (categoryTexts == null || index < 0 || index >= categoryTexts.Length) return;
-        var text = categoryTexts[index];
-        if (text != null)
+        if (index < 0 || index >= categoryKeys.Length) return;
+
+        // If CategoryUI available and assigned, update image + count text.
+        if (categoryUIs != null && index < categoryUIs.Length && categoryUIs[index] != null)
         {
-            text.text = $"{categoryKeys[index]}: {categoryCounts[index]}";
+            var ui = categoryUIs[index];
+
+            // Update Image sprite and visibility
+            if (ui.image != null)
+            {
+                if (ui.showImage && ui.sprite != null)
+                {
+                    ui.image.enabled = true;
+                    ui.image.sprite = ui.sprite;
+                    ui.image.SetNativeSize();
+                }
+                else
+                {
+                    // hide if no sprite or explicitly disabled
+                    ui.image.enabled = false;
+                }
+            }
+
+            // Update count text
+            if (ui.countText != null)
+            {
+                // Only show number by default (no key). If you want "key: count" set .text accordingly
+                ui.countText.text = categoryCounts[index].ToString();
+            }
+
+            return;
         }
+
+        // Fallback: if older categoryTexts were used (not present anymore in this version),
+        // keep old behavior by finding a TMP_Text in children named after category key (optional).
+        if (debugLog) Debug.LogWarning($"BasketCollisionDestroyer: No CategoryUI set for index {index}. Please assign categoryUIs in inspector.");
     }
 
     // Update all UI fields
