@@ -12,7 +12,7 @@ using TMPro;
 ///   the prefab's name contains one of these words (case-insensitive):
 ///   dzervene, avene, zemene, mellene, lacene
 ///
-/// Matching is case-insensitive and uses the root object's name (strips "(Clone)").
+/// Matching is case-insensitive and uses the root object's name (strips "(Clone)")
 public class BasketCollisionDestroyer : MonoBehaviour
 {
     [Tooltip("Tag to check for and destroy on contact.")]
@@ -260,7 +260,7 @@ public class BasketCollisionDestroyer : MonoBehaviour
             if (ui.countText != null)
             {
                 // Only show number by default (no key). If you want "key: count" set .text accordingly
-                ui.countText.text = categoryCounts[index].ToString();
+                ui.countText.text = $"X {categoryCounts[index]}";
             }
 
             return;
