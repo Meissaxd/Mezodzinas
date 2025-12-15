@@ -172,3 +172,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ingredientName: Flour
+  onUseClip: {fileID: 8300000, guid: 8232b721b909f3e44b79bd1ff05e482c, type: 3}
+  onUseVolume: 0.531
+  randomizePitch: 0
+  pitchMin: 0.95
+  pitchMax: 1.05

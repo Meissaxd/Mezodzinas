@@ -222,6 +222,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterIndex: 0
   characterName: 
+  clickClip: {fileID: 8300000, guid: e44a066bcbbdd464caf8091f7dd35169, type: 3}
+  clickVolume: 1
+  persistentAudioSource: {fileID: 0}
+  waitForSfx: 0
+  waitMultiplier: 1
 --- !u!61 &400507890
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -531,6 +536,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterIndex: 0
   characterName: 
+  clickClip: {fileID: 8300000, guid: e44a066bcbbdd464caf8091f7dd35169, type: 3}
+  clickVolume: 1
+  persistentAudioSource: {fileID: 0}
+  waitForSfx: 0
+  waitMultiplier: 1
 --- !u!1 &1416350579
 GameObject:
   m_ObjectHideFlags: 0
@@ -579,6 +589,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterIndex: 0
   characterName: 
+  clickClip: {fileID: 8300000, guid: e44a066bcbbdd464caf8091f7dd35169, type: 3}
+  clickVolume: 1
+  persistentAudioSource: {fileID: 0}
+  waitForSfx: 0
+  waitMultiplier: 1
 --- !u!61 &1416350582
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -884,6 +899,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterIndex: 0
   characterName: 
+  clickClip: {fileID: 8300000, guid: e44a066bcbbdd464caf8091f7dd35169, type: 3}
+  clickVolume: 1
+  persistentAudioSource: {fileID: 0}
+  waitForSfx: 0
+  waitMultiplier: 1
 --- !u!61 &2112351955
 BoxCollider2D:
   m_ObjectHideFlags: 0

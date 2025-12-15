@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SingleProjectileWatcher2D : MonoBehaviour
+public class DynamicProjectileWatcher2D : MonoBehaviour
 {
     // Rotation speed in degrees per second
     public float rotationSpeed = 90f;

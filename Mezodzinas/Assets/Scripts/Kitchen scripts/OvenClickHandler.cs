@@ -13,7 +13,7 @@ public class OvenClickHandler : MonoBehaviour
         tablePosition = position;
         canSpawn = true;
 
-        Debug.Log($"[OvenClickHandler] Setup complete. Will spawn '{bakedPiePrefab.name}' at {tablePosition}");
+        Debug.Log($"[OvenClickHandler] Setup complete. Will spawn '{(bakedPiePrefab != null ? bakedPiePrefab.name : "null")}' at {tablePosition}");
     }
 
     void OnMouseDown()
