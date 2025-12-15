@@ -172,3 +172,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ingredientName: Milk
+  onUseClip: {fileID: 8300000, guid: d6f381e47b7677043960dc5d3fa7c027, type: 3}
+  onUseVolume: 1
+  randomizePitch: 0
+  pitchMin: 0.95
+  pitchMax: 1.05

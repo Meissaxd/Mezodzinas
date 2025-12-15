@@ -459,15 +459,7 @@ public class RandomNumberGenerator : MonoBehaviour
     {
         // Do not auto-generate on start.
         // Hide any assigned image so nothing is visible before the first generation.
-        if (targetImage != null)
-            targetImage.enabled = false;
-        else
-        {
-            var childImage = GetComponentInChildren<Image>();
-            if (childImage != null)
-                childImage.enabled = false;
-        }
-
+   
         // Wire up the optional UI Button (use a void method wrapper so Button.onClick works)
         if (spawnButton != null)
             spawnButton.onClick.AddListener(OnSpawnButtonPressed);

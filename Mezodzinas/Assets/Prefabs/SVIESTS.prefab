@@ -172,3 +172,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ingredientName: Butter
+  onUseClip: {fileID: 8300000, guid: 6569301736e58534bbe949b6151d605c, type: 3}
+  onUseVolume: 1
+  randomizePitch: 0
+  pitchMin: 0.95
+  pitchMax: 1.05

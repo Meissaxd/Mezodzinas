@@ -172,3 +172,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ingredientName: Sugar
+  onUseClip: {fileID: 8300000, guid: 45fd04e2b00a0ae4eb1e5da772e69b0c, type: 3}
+  onUseVolume: 1
+  randomizePitch: 0
+  pitchMin: 0.95
+  pitchMax: 1.05

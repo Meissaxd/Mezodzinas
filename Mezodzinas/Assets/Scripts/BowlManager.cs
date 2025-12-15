@@ -9,6 +9,10 @@ public class BowlManager : MonoBehaviour
     [HideInInspector]
     public int currentStage = 0; // Start with empty bowl
 
+    [Header("Audio (optional)")]
+    [Tooltip("Optional persistent AudioSource to play SFX from. DO NOT assign an AudioSource that lives on the object that will be destroyed.")]
+    public AudioSource persistentAudioSource;
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Ingredient"))
@@ -22,8 +26,13 @@ public class BowlManager : MonoBehaviour
                 // Check if it's the correct ingredient in sequence
                 if (currentStage < ingredientOrder.Length && ingredientName == ingredientOrder[currentStage])
                 {
+                    // Let the ingredient handle playing its own assigned clip (safe if the ingredient will be destroyed).
+                    ingredient.PlayOnUseClip(persistentAudioSource);
+
                     AddIngredient();
-                    Destroy(collision.gameObject); // remove the used ingredient
+
+                    // remove the used ingredient (destroy after playing SFX)
+                    Destroy(collision.gameObject);
                 }
                 else
                 {
@@ -53,6 +62,9 @@ public class BowlManager : MonoBehaviour
                 newBowlManager.currentStage = currentStage;
                 newBowlManager.bowlStages = bowlStages;
                 newBowlManager.ingredientOrder = ingredientOrder;
+
+                // copy persistent audio source so next bowl keeps playing SFX via the same AudioSource
+                newBowlManager.persistentAudioSource = persistentAudioSource;
             }
 
             // Remove the old bowl object
