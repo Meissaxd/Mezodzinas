@@ -12,6 +12,8 @@ public class BushClickHandler : MonoBehaviour
 
     void OnMouseUpAsButton()
     {
+        TutorialManager.Instance?.ShowTutorial();
+
         if (rng != null)
         {
             rng.Generate();
