@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2290235122333153790}
   - component: {fileID: 2638083256070705746}
   - component: {fileID: 5173121815953649625}
+  - component: {fileID: 7004241917888729599}
   m_Layer: 0
   m_Name: BakedPiePrefab
   m_TagString: Untagged
@@ -130,3 +131,17 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 7.804903, y: 3.493401}
   m_EdgeRadius: 0
+--- !u!114 &7004241917888729599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6902808742126553757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49bd39c6366eff74d98a45e8fbe78c34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  triggerOnce: 1
+  deactivateOnTrigger: 1
